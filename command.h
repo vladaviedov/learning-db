@@ -3,9 +3,20 @@
 #include "input.h"
 
 typedef enum {
-	CMD_SUCCESS,
-	CMD_FAILED,
-	CMD_UNRECOGNIZED
-} status;
+	RES_SUCCESS,
+	RES_FAILED,
+	RES_UNRECOGNIZED
+} result;
 
-status run_meta(input_buf *buffer);
+typedef enum {
+	ST_INSERT,
+	ST_SELECT
+} statement_type;
+
+typedef struct {
+	statement_type type;
+} statement;
+
+result run_meta(input_buf *buffer);
+result parse_statement(input_buf *buffer, statement *out);
+void execute(statement *st);

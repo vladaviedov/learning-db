@@ -6,23 +6,36 @@
 #include "input.h"
 #include "command.h"
 
-int main(int argc, char **argv) {
+int main() {
 	input_buf *input = new_input_buf();
 	while (1) {
 		prompt(input);
 
 		if (input->data[0] == '.') {
-			status result = run_meta(input);
-			switch (result) {
-				case CMD_UNRECOGNIZED:
+			result status = run_meta(input);
+			switch (status) {
+				case RES_UNRECOGNIZED:
 					printf("unrecognized command\n");
 					continue;
-				case CMD_FAILED:
+				case RES_FAILED:
 					printf("an error occured\n");
 					continue;
-				case CMD_SUCCESS:
+				case RES_SUCCESS:
 					continue;
 			}
 		}
+
+        statement st;
+        result parse_status = parse_statement(input, &st);
+        switch (parse_status) {
+            case RES_UNRECOGNIZED:
+                printf("unrecognized keyword\n");
+                continue;
+            default:
+                break;
+        }
+
+        execute(&st);
+        printf("executed\n");
 	}
 }
