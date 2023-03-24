@@ -1,11 +1,15 @@
 #pragma once
 
 #include "input.h"
+#include "row.h"
+#include "table.h"
 
 typedef enum {
 	RES_SUCCESS,
 	RES_FAILED,
-	RES_UNRECOGNIZED
+	RES_UNRECOGNIZED,
+	RES_FULL,
+	RES_EXIT
 } result;
 
 typedef enum {
@@ -15,8 +19,9 @@ typedef enum {
 
 typedef struct {
 	statement_type type;
+	row insert_row;
 } statement;
 
 result run_meta(input_buf *buffer);
 result parse_statement(input_buf *buffer, statement *out);
-void execute(statement *st);
+result execute(statement *st, table *t);

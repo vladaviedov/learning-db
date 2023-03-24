@@ -5,9 +5,14 @@
 
 #include "input.h"
 #include "command.h"
+#include "table.h"
+
+void cleanup(input_buf *i, table *t);
 
 int main() {
 	input_buf *input = new_input_buf();
+	table *table = create_table();
+
 	while (1) {
 		prompt(input);
 
@@ -20,7 +25,9 @@ int main() {
 				case RES_FAILED:
 					printf("an error occured\n");
 					continue;
-				case RES_SUCCESS:
+				case RES_EXIT:
+					cleanup(input, table);
+				default:
 					continue;
 			}
 		}
@@ -31,11 +38,20 @@ int main() {
             case RES_UNRECOGNIZED:
                 printf("unrecognized keyword\n");
                 continue;
+            case RES_FAILED:
+                printf("syntax error\n");
+                continue;
             default:
                 break;
         }
 
-        execute(&st);
+        execute(&st, table);
         printf("executed\n");
 	}
+}
+
+void cleanup(input_buf *i, table *t) {
+	del_input_buf(i);
+	destroy_table(t);
+	exit(EXIT_SUCCESS);
 }
