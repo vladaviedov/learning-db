@@ -9,9 +9,14 @@
 
 void cleanup(input_buf *i, table *t);
 
-int main() {
+int main(int argc, char **argv) {
+	if (argc < 2) {
+		fprintf(stderr, "invalid arguments\n");
+		exit(EXIT_FAILURE);
+	}
+
 	input_buf *input = new_input_buf();
-	table *table = create_table();
+	table *table = open_table(argv[1]);
 
 	while (1) {
 		prompt(input);
@@ -51,7 +56,7 @@ int main() {
 }
 
 void cleanup(input_buf *i, table *t) {
+	close_table(t);
 	del_input_buf(i);
-	destroy_table(t);
 	exit(EXIT_SUCCESS);
 }

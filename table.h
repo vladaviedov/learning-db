@@ -9,10 +9,16 @@
 #define TABLE_MAX_ROWS (ROWS_PER_PAGE * TABLE_MAX_PAGES)
 
 typedef struct {
-	uint64_t row_num;
+	int fd;
+	uint32_t fsize;
 	void *pages[TABLE_MAX_PAGES];
+} table_cache;
+
+typedef struct {
+	uint64_t row_num;
+	table_cache *cache;
 } table;
 
-table *create_table();
-void destroy_table(table *t);
+table *open_table(const char *file);
+void close_table(table *t);
 void *get_row(table *table, uint32_t num);
