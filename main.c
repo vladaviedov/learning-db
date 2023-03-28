@@ -20,10 +20,10 @@ int main() {
 			result status = run_meta(input);
 			switch (status) {
 				case RES_UNRECOGNIZED:
-					printf("unrecognized command\n");
+					fprintf(stderr, "unrecognized command\n");
 					continue;
 				case RES_FAILED:
-					printf("an error occured\n");
+					fprintf(stderr, "an error occured\n");
 					continue;
 				case RES_EXIT:
 					cleanup(input, table);
@@ -36,10 +36,10 @@ int main() {
         result parse_status = parse_statement(input, &st);
         switch (parse_status) {
             case RES_UNRECOGNIZED:
-                printf("unrecognized keyword\n");
+                fprintf(stderr, "unrecognized keyword\n");
                 continue;
             case RES_FAILED:
-                printf("syntax error\n");
+                fprintf(stderr, "syntax error\n");
                 continue;
             default:
                 break;

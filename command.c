@@ -2,6 +2,7 @@
 #include "input.h"
 #include "table.h"
 #include "util.h"
+#include "row.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,13 +28,38 @@ result run_meta(input_buf *buffer) {
 result parse_statement(input_buf *buffer, statement *out) {
 	if (strncmp(buffer->data, INSERT, 6) == 0) {
 		out->type = ST_INSERT;
-		int scanned = sscanf(buffer->data, "insert %d %s %s",
-			&out->insert_row.id,
-			out->insert_row.username,
-			out->insert_row.email);
-		if (scanned < 3) {
+		
+		unused char *key = strtok(buffer->data, " ");
+		char *id_str = strtok(NULL, " ");
+		char *username = strtok(NULL, " ");
+		char *email = strtok(NULL, " ");
+
+		// Validate null
+		if (id_str == NULL || username == NULL || email == NULL) {
+			fprintf(stderr, "bad arguments\n");
 			return RES_FAILED;
 		}
+
+		// Validate size
+		if (strlen(username) > COL_USERNAME_SIZE) {
+			fprintf(stderr, "username too long\n");
+			return RES_FAILED;
+		}
+		if (strlen(email) > COL_EMAIL_SIZE) {
+			fprintf(stderr, "email too long\n");
+			return RES_FAILED;
+		}
+
+		// Validate id
+		int id = atoi(id_str);
+		if (id < 0) {
+			fprintf(stderr, "id cannot be negative\n");
+			return RES_FAILED;
+		}
+
+		out->insert_row.id = id;
+		strncpy(out->insert_row.username, username, COL_USERNAME_SIZE);
+		strncpy(out->insert_row.email, email, COL_EMAIL_SIZE);
 
 		return RES_SUCCESS;
 	}
