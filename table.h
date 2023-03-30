@@ -21,4 +21,4 @@ typedef struct {
 
 table *open_table(const char *file);
 void close_table(table *t);
-void *get_row(table *table, uint32_t num);
+void *get_page(table_cache *cache, uint32_t num);

@@ -3,6 +3,7 @@
 #include "table.h"
 #include "util.h"
 #include "row.h"
+#include "cursor.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,17 +92,22 @@ result execute_insert(statement *st, table *t) {
 		return RES_FULL;
 	}
 
-	serialize(&st->insert_row, get_row(t, t->row_num));
+	cursor *end = table_end(t);
+	serialize(&st->insert_row, cursor_value(end));
 	t->row_num++;
 
+	free(end);
 	return RES_SUCCESS;
 }
 
 result execute_select(unused statement *st, table *t) {
+	cursor *cur = table_start(t);
+
 	row row;
-	for (uint32_t i = 0; i < t->row_num; i++) {
-		deserialize(get_row(t, i), &row);
+	while (!cur->end) {
+		deserialize(cursor_value(cur), &row);
 		print_row(&row);
+		cursor_inc(cur);
 	}
 
 	return RES_SUCCESS;

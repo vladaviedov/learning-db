@@ -7,7 +7,6 @@
 #include <fcntl.h>
 
 table_cache *open_cache(const char *file);
-void *get_page(table_cache *cache, uint32_t num);
 void flush_page(table_cache *cache, uint32_t num, uint32_t size);
 
 table *open_table(const char *file) {
@@ -54,34 +53,6 @@ void close_table(table *t) {
 	free(t);
 }
 
-void *get_row(table *table, uint32_t num) {
-	uint32_t page_num = num / ROWS_PER_PAGE;
-	void *page = get_page(table->cache, page_num);
-
-	uint32_t offset = (num % ROWS_PER_PAGE) * ROW_SIZE;
-	return page + offset;
-}
-
-/* Cache */
-
-table_cache *open_cache(const char *file) {
-	int fd = open(file, O_RDWR | O_CREAT, S_IWUSR | S_IRUSR);
-	if (fd < 0) {
-		fprintf(stderr, "failed to open file\n");
-		exit(EXIT_FAILURE);
-	}
-
-	table_cache *cache = malloc(sizeof(table_cache));
-	cache->fd = fd;
-	cache->fsize = lseek(fd, 0, SEEK_END);
-
-	for (uint32_t i = 0; i < TABLE_MAX_PAGES; i++) {
-		cache->pages[i] = NULL;
-	}
-
-	return cache;
-}
-
 void *get_page(table_cache *cache, uint32_t num) {
 	if (num > TABLE_MAX_PAGES) {
 		fprintf(stderr, "tried to access outside bounds\n");
@@ -112,6 +83,26 @@ void *get_page(table_cache *cache, uint32_t num) {
 	}
 
 	return cache->pages[num];
+}
+
+/* Cache */
+
+table_cache *open_cache(const char *file) {
+	int fd = open(file, O_RDWR | O_CREAT, S_IWUSR | S_IRUSR);
+	if (fd < 0) {
+		fprintf(stderr, "failed to open file\n");
+		exit(EXIT_FAILURE);
+	}
+
+	table_cache *cache = malloc(sizeof(table_cache));
+	cache->fd = fd;
+	cache->fsize = lseek(fd, 0, SEEK_END);
+
+	for (uint32_t i = 0; i < TABLE_MAX_PAGES; i++) {
+		cache->pages[i] = NULL;
+	}
+
+	return cache;
 }
 
 void flush_page(table_cache *cache, uint32_t num, uint32_t size) {

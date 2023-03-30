@@ -3,7 +3,7 @@ CFLAGS=-Wall -Wextra -g
 LDFLAGS=
 TARGET=db
 
-db: main.o input.o command.o row.o table.o
+db: main.o input.o command.o row.o table.o cursor.o
 	$(CC) $^ -o $@ $(LDFLAGS)
 
 main.o: main.c
@@ -16,6 +16,9 @@ row.o: row.c
 	$(CC) $(CFLAGS) -c $< -o $@
 table.o: table.c
 	$(CC) $(CFLAGS) -c $< -o $@
+cursor.o: cursor.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
+.PHONY: clean
 clean:
 	rm *.o $(TARGET)
