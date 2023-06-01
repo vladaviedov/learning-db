@@ -4,7 +4,8 @@
 
 typedef struct {
 	table *table;
-	uint32_t row;
+	uint32_t page;
+	uint32_t cell;
 	int end;
 } cursor;
 

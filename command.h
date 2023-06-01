@@ -22,6 +22,6 @@ typedef struct {
 	row insert_row;
 } statement;
 
-result run_meta(input_buf *buffer);
+result run_meta(input_buf *buffer, table *t);
 result parse_statement(input_buf *buffer, statement *out);
 result execute(statement *st, table *t);

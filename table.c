@@ -1,5 +1,6 @@
 #include "table.h"
 #include "row.h"
+#include "node.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,33 +8,34 @@
 #include <fcntl.h>
 
 table_cache *open_cache(const char *file);
-void flush_page(table_cache *cache, uint32_t num, uint32_t size);
+void flush_page(table_cache *cache, uint32_t num);
 
 table *open_table(const char *file) {
 	table *t = malloc(sizeof(table));
+
 	t->cache = open_cache(file);
-	t->row_num = t->cache->fsize / ROW_SIZE;
+	t->root_page = 0;
+
+	// New database
+	if (t->cache->num_pages == 0) {
+		// Create root lead node
+		leaf_node *root = get_page(t->cache, 0);
+		leaf_init(root, NULL);
+	}
 
 	return t;
 }
 
 void close_table(table *t) {
 	table_cache *cache = t->cache;
-	uint32_t full_num = t->row_num / ROWS_PER_PAGE;
 
-	// Write full pages
-	for (uint32_t i = 0; i < full_num; i++) {
+	// Write pages
+	for (uint32_t i = 0; i < cache->num_pages; i++) {
 		if (cache->pages[i] == NULL) {
 			continue;
 		}
 
-		flush_page(cache, i, PAGE_SIZE);
-	}
-
-	// Write partial pages
-	uint32_t extra_rows = t->row_num % ROWS_PER_PAGE;
-	if (extra_rows > 0 && cache->pages[full_num] != NULL) {
-		flush_page(cache, full_num, extra_rows * ROW_SIZE);
+		flush_page(cache, i);
 	}
 
 	// Close page
@@ -80,6 +82,11 @@ void *get_page(table_cache *cache, uint32_t num) {
 		}
 
 		cache->pages[num] = page;
+
+		// Update number of pages
+		if (num >= cache->num_pages) {
+			cache->num_pages = num + 1;
+		}
 	}
 
 	return cache->pages[num];
@@ -97,7 +104,13 @@ table_cache *open_cache(const char *file) {
 	table_cache *cache = malloc(sizeof(table_cache));
 	cache->fd = fd;
 	cache->fsize = lseek(fd, 0, SEEK_END);
+	cache->num_pages = cache->fsize / PAGE_SIZE;
 
+	if (cache->fsize % PAGE_SIZE != 0) {
+		fprintf(stderr, "db file is corrupt\n");
+		exit(EXIT_FAILURE);
+	}
+	
 	for (uint32_t i = 0; i < TABLE_MAX_PAGES; i++) {
 		cache->pages[i] = NULL;
 	}
@@ -105,7 +118,7 @@ table_cache *open_cache(const char *file) {
 	return cache;
 }
 
-void flush_page(table_cache *cache, uint32_t num, uint32_t size) {
+void flush_page(table_cache *cache, uint32_t num) {
 	if (cache->pages[num] == NULL) {
 		fprintf(stderr, "failed to flush: null page\n");
 		exit(EXIT_FAILURE);
@@ -117,7 +130,7 @@ void flush_page(table_cache *cache, uint32_t num, uint32_t size) {
 		exit(EXIT_FAILURE);
 	}
 
-	int64_t bytes = write(cache->fd, cache->pages[num], size);
+	int64_t bytes = write(cache->fd, cache->pages[num], PAGE_SIZE);
 	if (bytes < 0) {
 		fprintf(stderr, "failed to flush: write failed\n");
 		exit(EXIT_FAILURE);

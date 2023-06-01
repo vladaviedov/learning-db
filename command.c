@@ -4,12 +4,15 @@
 #include "util.h"
 #include "row.h"
 #include "cursor.h"
+#include "node.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define EXIT ".exit"
+#define BTREE ".btree"
+#define DEBUG ".debug"
 
 #define INSERT "insert"
 #define SELECT "select"
@@ -17,10 +20,20 @@
 result execute_insert(statement *st, table *t);
 result execute_select(statement *st, table *t);
 void print_row(row *r);
+void print_tree(leaf_node *n);
+void print_debug();
 
-result run_meta(input_buf *buffer) {
+result run_meta(input_buf *buffer, table *t) {
 	if (strcmp(buffer->data, EXIT) == 0) {
 		return RES_EXIT;
+	}
+	if (strcmp(buffer->data, BTREE) == 0) {
+		print_tree(get_page(t->cache, t->root_page));
+		return RES_SUCCESS;
+	}
+	if (strcmp(buffer->data, DEBUG) == 0) {
+		print_debug();
+		return RES_SUCCESS;
 	}
 
 	return RES_UNRECOGNIZED;
@@ -88,13 +101,13 @@ result execute(statement *st, table *t) {
 // Internal
 
 result execute_insert(statement *st, table *t) {
-	if (t->row_num >= TABLE_MAX_ROWS) {
+	leaf_node *node = get_page(t->cache, t->root_page);
+	if (node->cell_count >= LEAF_MAX_CELLS) {
 		return RES_FULL;
 	}
 
 	cursor *end = table_end(t);
-	serialize(&st->insert_row, cursor_value(end));
-	t->row_num++;
+	leaf_insert(end, st->insert_row.id, &(st->insert_row));
 
 	free(end);
 	return RES_SUCCESS;
@@ -118,4 +131,24 @@ void print_row(row *r) {
 		r->id,
 		r->username,
 		r->email);
+}
+
+void print_tree(leaf_node *n) {
+	printf("leaf node size: %d\n", n->cell_count);
+	for (uint32_t i = 0; i < n->cell_count; i++) {
+		printf("\t- %d: %d\n", i, n->data[i].key);
+	}
+}
+
+void print_debug() {
+	printf("Debug Info Start\n\n");
+	printf("ROW_SIZE: %lu\n", ROW_SIZE);
+	printf("sizeof(row): %lu\n", sizeof(row));
+	printf("sizeof(node_header): %lu\n", sizeof(node_header));
+	printf("sizeof(leaf_node): %lu\n", sizeof(leaf_node));
+	printf("sizeof(cell): %lu\n", sizeof(cell));
+	printf("LEAF_CELL_MEM: %lu\n", LEAF_CELL_MEM);
+	printf("LEAF_MAX_CELLS: %lu\n", LEAF_MAX_CELLS);
+	printf("LEAF_PADDING: %lu\n", LEAF_PADDING);
+	printf("\nDebug Info End\n");
 }

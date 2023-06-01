@@ -26,7 +26,7 @@ void deserialize(void *src, row *dest);
 // Field offsets
 #define ID_OFFSET 0
 #define USERNAME_OFFSET (ID_OFFSET + ID_SIZE)
-#define EMAIL_OFFSET (USERNAME_OFFSET + EMAIL_SIZE)
+#define EMAIL_OFFSET (USERNAME_OFFSET + USERNAME_SIZE)
 
 // Total size
 #define ROW_SIZE (EMAIL_OFFSET + EMAIL_SIZE)

@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
 		prompt(input);
 
 		if (input->data[0] == '.') {
-			result status = run_meta(input);
+			result status = run_meta(input, table);
 			switch (status) {
 				case RES_UNRECOGNIZED:
 					fprintf(stderr, "unrecognized command\n");
