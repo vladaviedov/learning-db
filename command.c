@@ -106,10 +106,17 @@ result execute_insert(statement *st, table *t) {
 		return RES_FULL;
 	}
 
-	cursor *end = table_end(t);
-	leaf_insert(end, st->insert_row.id, &(st->insert_row));
+	uint32_t key = st->insert_row.id;
+	cursor *cur = table_find(t, key);
+	if (cur->cell < node->cell_count) {
+		if (node->data[cur->cell].key == key) {
+			return RES_DUPLICATE;
+		}
+	}
 
-	free(end);
+	leaf_insert(cur, st->insert_row.id, &(st->insert_row));
+	free(cur);
+
 	return RES_SUCCESS;
 }
 

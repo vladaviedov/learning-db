@@ -10,6 +10,6 @@ typedef struct {
 } cursor;
 
 cursor *table_start(table *t);
-cursor *table_end(table *t);
+cursor *table_find(table *t, uint32_t key);
 void *cursor_value(cursor *cur);
 void cursor_inc(cursor *cur);

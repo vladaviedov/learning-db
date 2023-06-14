@@ -36,3 +36,4 @@ typedef struct {
 
 void leaf_init(leaf_node *node, node_header *parent);
 void leaf_insert(cursor *cur, uint32_t key, row *value);
+uint32_t leaf_find_pos(leaf_node *node, uint32_t key);

@@ -20,16 +20,21 @@ cursor *table_start(table *t) {
 	return cur;
 }
 
-cursor *table_end(table *t) {
+cursor *table_find(table *t, uint32_t key) {
 	cursor *cur = malloc(sizeof(cursor));
 
 	cur->table = t;
 	cur->page = t->root_page;
-	cur->end = 1;
-
-	// Retrieve root node
-	leaf_node *root = get_page(t->cache, t->root_page);
-	cur->cell = root->cell_count;
+	
+	node_header *root = get_page(t->cache, t->root_page);
+	if (root->type == NODE_LEAF) {
+		leaf_node *leaf_root = (leaf_node *)root;
+		cur->cell = leaf_find_pos(leaf_root, key);
+		cur->end = (cur->cell == leaf_root->cell_count);
+	} else {
+		// TODO: implement
+		exit(EXIT_FAILURE);
+	}
 
 	return cur;
 }

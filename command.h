@@ -8,6 +8,7 @@ typedef enum {
 	RES_SUCCESS,
 	RES_FAILED,
 	RES_UNRECOGNIZED,
+	RES_DUPLICATE,
 	RES_FULL,
 	RES_EXIT
 } result;

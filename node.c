@@ -35,3 +35,25 @@ void leaf_insert(cursor *cur, uint32_t key, row *value) {
 	node->data[cur->cell].key = key;
 	serialize(value, node->data[cur->cell].value);
 }
+
+uint32_t leaf_find_pos(leaf_node *node, uint32_t key) {
+	uint32_t min = 0;
+	// Exclusive max
+	uint32_t emax = node->cell_count;
+
+	while (emax != min) {
+		uint32_t i = (min + emax) / 2;
+		uint32_t i_key = node->data[i].key;
+		if (key == i_key) {
+			return i;
+		}
+
+		if (key < i_key) {
+			emax = i;
+		} else {
+			min = i + 1;
+		}
+	}
+
+	return min;
+}
