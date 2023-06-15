@@ -19,8 +19,7 @@ table *open_table(const char *file) {
 	// New database
 	if (t->cache->num_pages == 0) {
 		// Create root lead node
-		leaf_node *root = get_page(t->cache, 0);
-		leaf_init(root, NULL);
+		leaf_init(t, 0, NULL);
 	}
 
 	return t;
@@ -90,6 +89,10 @@ void *get_page(table_cache *cache, uint32_t num) {
 	}
 
 	return cache->pages[num];
+}
+
+uint32_t new_page_idx(table_cache *cache) {
+	return cache->num_pages;
 }
 
 /* Cache */

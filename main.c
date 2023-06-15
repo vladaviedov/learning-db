@@ -55,9 +55,6 @@ int main(int argc, char **argv) {
 			case RES_UNRECOGNIZED:
 				fprintf(stderr, "unrecognized operation\n");
 				continue;
-			case RES_FULL:
-				fprintf(stderr, "table is full\n");
-				continue;
 			case RES_DUPLICATE:
 				fprintf(stderr, "duplicate key detected\n");
 				continue;

@@ -1,16 +1,29 @@
 #include "node.h"
+#include "row.h"
+#include "table.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void leaf_init(leaf_node *node, node_header *parent) {
+internal_node *internal_init(table *t, uint32_t page, node_header *parent);
+void split_insert(leaf_node *node, cursor *cur, row *value);
+child get_child_meta(node_header *node);
+
+leaf_node *leaf_init(table *t, uint32_t page, node_header *parent) {
+	leaf_node *node = get_page(t->cache, page);
+
 	// Common header
 	node->header.type = NODE_LEAF;
-	node->header.parent = parent;
 	node->header.is_root = (parent == NULL);
+	node->header.page = page;
+	if (parent != NULL) {
+		node->header.parent = parent->page;
+	}
 	// Leaf node fields
 	node->cell_count = 0;
+
+	return node;
 }
 
 void leaf_insert(cursor *cur, uint32_t key, row *value) {
@@ -18,9 +31,8 @@ void leaf_insert(cursor *cur, uint32_t key, row *value) {
 	
 	// Node is full
 	if (node->cell_count >= LEAF_MAX_CELLS) {
-		// TODO: implement multinode trees
-		fprintf(stderr, "multiple nodes are not implemented yet\n");
-		exit(EXIT_FAILURE);
+		split_insert(node, cur, value);
+		return;
 	}
 
 	// Inserting in the middle, move bigger elements
@@ -56,4 +68,84 @@ uint32_t leaf_find_pos(leaf_node *node, uint32_t key) {
 	}
 
 	return min;
+}
+
+/* Internal */
+
+internal_node *internal_init(table *t, uint32_t page, node_header *parent) {
+	internal_node *node = get_page(t->cache, page);
+
+	// Common header
+	node->header.type = NODE_INTERNAL;
+	node->header.is_root = (parent == NULL);
+	node->header.page = page;
+	if (parent != NULL) {
+		node->header.parent = parent->page;
+	}
+	// Internal node fields
+	node->key_count = 0;
+
+	return node;
+}
+
+void split_insert(leaf_node *old_node, cursor *cur, row *value) {
+	// Split items between nodes
+	leaf_node *new_node = leaf_init(cur->table, new_page_idx(cur->table->cache), NULL);
+	for (uint32_t i = 0; i <= LEAF_MAX_CELLS; i++) {
+		leaf_node *target_node = (i >= LEAF_SPLIT_LEFT) ? new_node : old_node;
+		cell *dest = target_node->data + i % LEAF_SPLIT_LEFT;
+
+		if (i == cur->cell) {
+			serialize(value, dest);
+		} else if (i > cur->cell) {
+			memcpy(dest, old_node->data + i - 1, sizeof(cell));
+		} else {
+			memcpy(dest, old_node->data + i, sizeof(cell));
+		}
+	}
+
+	// Update counts
+	old_node->cell_count = LEAF_SPLIT_LEFT;
+	new_node->cell_count = LEAF_SPLIT_RIGHT;
+
+	// Attach to parent
+	if (old_node->header.is_root) {
+		// Move old node to new node
+		uint32_t old_page_id = old_node->header.page;
+		uint32_t new_page_id = new_page_idx(cur->table->cache);
+		leaf_node *copy = get_page(cur->table->cache, new_page_id);
+		memcpy(copy, old_node, PAGE_SIZE);
+		// Update metadata
+		copy->header.parent = old_page_id;
+		copy->header.is_root = 0;
+		copy->header.page = new_page_id;
+
+		// Update pointer
+		old_node = copy;
+		
+		// Create root node
+		internal_node *new_root = internal_init(cur->table, old_page_id, NULL);
+		new_root->key_count = 1;
+		new_root->data[0] = get_child_meta(&copy->header);
+		new_root->last_child = new_node->header.page;
+	} else {
+		// TODO: implement
+		fprintf(stderr, "not implemented\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+child get_child_meta(node_header *node) {
+	child metadata;
+	metadata.page = node->page;
+
+	if (node->type == NODE_LEAF) {
+		leaf_node *full_node = (leaf_node *)node;
+		metadata.key = full_node->data[full_node->cell_count - 1].key;
+	} else {
+		internal_node *full_node = (internal_node *)node;
+		metadata.key = full_node->data[full_node->key_count - 1].key;
+	}
+
+	return metadata;
 }

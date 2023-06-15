@@ -20,15 +20,16 @@
 result execute_insert(statement *st, table *t);
 result execute_select(statement *st, table *t);
 void print_row(row *r);
-void print_tree(leaf_node *n);
+void print_node(table_cache *cache, uint32_t page_num, uint32_t indent);
 void print_debug();
+void print_indents(uint32_t count);
 
 result run_meta(input_buf *buffer, table *t) {
 	if (strcmp(buffer->data, EXIT) == 0) {
 		return RES_EXIT;
 	}
 	if (strcmp(buffer->data, BTREE) == 0) {
-		print_tree(get_page(t->cache, t->root_page));
+		print_node(t->cache, t->root_page, 0);
 		return RES_SUCCESS;
 	}
 	if (strcmp(buffer->data, DEBUG) == 0) {
@@ -102,9 +103,6 @@ result execute(statement *st, table *t) {
 
 result execute_insert(statement *st, table *t) {
 	leaf_node *node = get_page(t->cache, t->root_page);
-	if (node->cell_count >= LEAF_MAX_CELLS) {
-		return RES_FULL;
-	}
 
 	uint32_t key = st->insert_row.id;
 	cursor *cur = table_find(t, key);
@@ -140,10 +138,28 @@ void print_row(row *r) {
 		r->email);
 }
 
-void print_tree(leaf_node *n) {
-	printf("leaf node size: %d\n", n->cell_count);
-	for (uint32_t i = 0; i < n->cell_count; i++) {
-		printf("\t- %d: %d\n", i, n->data[i].key);
+void print_node(table_cache *cache, uint32_t page_num, uint32_t indent) {
+	node_header *header = get_page(cache, page_num);
+	
+	print_indents(indent);
+	if (header->type == NODE_LEAF) {
+		leaf_node *node = (leaf_node *)header;
+		printf("- leaf (size %u)\n", node->cell_count);
+		indent++;
+		for (uint32_t i = 0; i < node->cell_count; i++) {
+			print_indents(indent);
+			printf("- %u\n", node->data[i].key);
+		}
+	} else {
+		internal_node *node = (internal_node *)header;
+		printf("- internal (size %u)\n", node->key_count);
+		indent++;
+		for (uint32_t i = 0; i < node->key_count; i++) {
+			print_node(cache, node->data[i].page, indent);
+			print_indents(indent);
+			printf("- %u\n", node->data[i].key);
+		}
+		print_node(cache, node->last_child, indent);
 	}
 }
 
@@ -153,9 +169,18 @@ void print_debug() {
 	printf("sizeof(row): %lu\n", sizeof(row));
 	printf("sizeof(node_header): %lu\n", sizeof(node_header));
 	printf("sizeof(leaf_node): %lu\n", sizeof(leaf_node));
-	printf("sizeof(cell): %lu\n", sizeof(cell));
+	printf("sizeof(internal_node): %lu\n", sizeof(internal_node));
 	printf("LEAF_CELL_MEM: %lu\n", LEAF_CELL_MEM);
 	printf("LEAF_MAX_CELLS: %lu\n", LEAF_MAX_CELLS);
 	printf("LEAF_PADDING: %lu\n", LEAF_PADDING);
+	printf("INTERNAL_CHILD_MEM: %lu\n", INTERNAL_CHILD_MEM);
+	printf("INTERNAL_MAX_CHILDREN: %lu\n", INTERNAL_MAX_CHILDREN);
+	printf("INTERNAL_PADDING: %lu\n", INTERNAL_PADDING);
 	printf("\nDebug Info End\n");
+}
+
+void print_indents(uint32_t count) {
+	for (uint32_t i = 0; i < count; i++) {
+		printf("\t");
+	}
 }
