@@ -25,7 +25,7 @@ typedef struct {
 } cell;
 
 // Leaf memory layout
-#define LEAF_CELL_MEM (PAGE_SIZE - sizeof(node_header) - sizeof(uint32_t))
+#define LEAF_CELL_MEM (PAGE_SIZE - sizeof(node_header) - sizeof(uint32_t) * 2)
 #define LEAF_MAX_CELLS (LEAF_CELL_MEM / sizeof(cell))
 #define LEAF_PADDING (LEAF_CELL_MEM % sizeof(cell))
 
@@ -37,6 +37,7 @@ typedef struct {
 typedef struct {
 	node_header header;
 	uint32_t cell_count;
+	uint32_t next_leaf;
 	cell data[LEAF_MAX_CELLS]; 
 	uint8_t padding[LEAF_PADDING];
 } leaf_node;

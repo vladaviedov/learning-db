@@ -9,7 +9,7 @@ typedef struct {
 	int end;
 } cursor;
 
-cursor *table_start(table *t);
 cursor *table_find(table *t, uint32_t key);
+cursor *table_start(table *t);
 void *cursor_value(cursor *cur);
 void cursor_inc(cursor *cur);

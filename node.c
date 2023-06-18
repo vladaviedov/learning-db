@@ -23,6 +23,7 @@ leaf_node *leaf_init(table *t, uint32_t page, node_header *parent) {
 	}
 	// Leaf node fields
 	node->cell_count = 0;
+	node->next_leaf = 0;
 
 	return node;
 }
@@ -122,7 +123,8 @@ void split_insert(leaf_node *old_node, cursor *cur, row *value) {
 		cell *dest = target_node->data + i % LEAF_SPLIT_LEFT;
 
 		if (i == cur->cell) {
-			serialize(value, dest);
+			dest->key = value->id;
+			serialize(value, dest->value);
 		} else if (i > cur->cell) {
 			memcpy(dest, old_node->data + i - 1, sizeof(cell));
 		} else {
@@ -159,6 +161,10 @@ void split_insert(leaf_node *old_node, cursor *cur, row *value) {
 		fprintf(stderr, "not implemented\n");
 		exit(EXIT_FAILURE);
 	}
+
+	// Update connections
+	new_node->next_leaf = old_node->next_leaf;
+	old_node->next_leaf = new_node->header.page;
 }
 
 child get_child_meta(node_header *node) {
