@@ -1,3 +1,5 @@
-# db-test
+# learning-db
 
-Simple database in C. Following [this guide](https://cstack.github.io/db_tutorial/parts/part1.html).
+Learning how to build a database.
+
+Following [this guide](https://cstack.github.io/db_tutorial/parts/part1.html).
