@@ -32,8 +32,10 @@ cursor *table_find(table *t, uint32_t key) {
 		cur->cell = leaf_find_pos(leaf_root, key);
 		cur->end = (cur->cell == leaf_root->cell_count);
 	} else {
-		// TODO: implement
-		exit(EXIT_FAILURE);
+		leaf_node *target_node = internal_find_leaf(t->cache, (internal_node *)root, key);
+		cur->page = target_node->header.page;
+		cur->cell = leaf_find_pos(target_node, key);
+		cur->end = (cur->cell == target_node->cell_count);
 	}
 
 	return cur;

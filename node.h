@@ -64,3 +64,4 @@ typedef struct {
 leaf_node *leaf_init(table *t, uint32_t page, node_header *parent);
 void leaf_insert(cursor *cur, uint32_t key, row *value);
 uint32_t leaf_find_pos(leaf_node *node, uint32_t key);
+leaf_node *internal_find_leaf(table_cache *cache, internal_node *node, uint32_t key);

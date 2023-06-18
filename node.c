@@ -1,6 +1,7 @@
 #include "node.h"
 #include "row.h"
 #include "table.h"
+#include "cursor.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -53,6 +54,7 @@ uint32_t leaf_find_pos(leaf_node *node, uint32_t key) {
 	// Exclusive max
 	uint32_t emax = node->cell_count;
 
+	// Binary search
 	while (emax != min) {
 		uint32_t i = (min + emax) / 2;
 		uint32_t i_key = node->data[i].key;
@@ -68,6 +70,30 @@ uint32_t leaf_find_pos(leaf_node *node, uint32_t key) {
 	}
 
 	return min;
+}
+
+leaf_node *internal_find_leaf(table_cache *cache, internal_node *node, uint32_t key) {
+	uint32_t min = 0;
+	uint32_t max = node->key_count;
+
+	// Binary search
+	while (min != max) {
+		uint32_t i = (min + max) / 2;
+		if (node->data[i].key >= key) {
+			max = i;
+		} else {
+			min = i + 1;
+		}
+	}
+	
+	// Search child
+	uint32_t child_page = (min == node->key_count) ? node->last_child : node->data[min].page;
+	node_header *child = get_page(cache, child_page);
+	if (child->type == NODE_LEAF) {
+		return (leaf_node *)child;
+	} else {
+		return internal_find_leaf(cache, (internal_node *)child, key);
+	}
 }
 
 /* Internal */
