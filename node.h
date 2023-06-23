@@ -46,23 +46,23 @@ typedef struct {
 typedef struct {
 	uint32_t page;
 	uint32_t key;
-} child;
+} child_meta;
 
 // Internal memory layout
 #define INTERNAL_CHILD_MEM (PAGE_SIZE - sizeof(node_header) - sizeof(uint32_t) * 2)
-#define INTERNAL_MAX_CHILDREN (INTERNAL_CHILD_MEM / sizeof(child))
-#define INTERNAL_PADDING (INTERNAL_CHILD_MEM % sizeof(child))
+#define INTERNAL_MAX_CHILDREN (INTERNAL_CHILD_MEM / sizeof(child_meta))
+#define INTERNAL_PADDING (INTERNAL_CHILD_MEM % sizeof(child_meta))
 
 // Must be 4 kB
 typedef struct {
 	node_header header;
 	uint32_t key_count;
 	uint32_t last_child;
-	child data[INTERNAL_MAX_CHILDREN];
+	child_meta data[INTERNAL_MAX_CHILDREN];
 	uint8_t padding[INTERNAL_PADDING];
 } internal_node;
 
-leaf_node *leaf_init(table *t, uint32_t page, node_header *parent);
+leaf_node *leaf_init(table *t, uint32_t page);
 void leaf_insert(cursor *cur, uint32_t key, row *value);
 uint32_t leaf_find_pos(leaf_node *node, uint32_t key);
 leaf_node *internal_find_leaf(table_cache *cache, internal_node *node, uint32_t key);

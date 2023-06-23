@@ -102,10 +102,10 @@ result execute(statement *st, table *t) {
 // Internal
 
 result execute_insert(statement *st, table *t) {
-	leaf_node *node = get_page(t->cache, t->root_page);
-
 	uint32_t key = st->insert_row.id;
 	cursor *cur = table_find(t, key);
+	leaf_node *node = get_page(t->cache, cur->page);
+
 	if (cur->cell < node->cell_count) {
 		if (node->data[cur->cell].key == key) {
 			return RES_DUPLICATE;

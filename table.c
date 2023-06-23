@@ -19,7 +19,7 @@ table *open_table(const char *file) {
 	// New database
 	if (t->cache->num_pages == 0) {
 		// Create root lead node
-		leaf_init(t, 0, NULL);
+		leaf_init(t, 0);
 	}
 
 	return t;
